@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #050505;
+            --panel: #0d0d12;
+            --primary: #9929EA;
+            --accent: #00f2ff;
+            --success: #39ff14;
+            --text-main: #e0e0e0;
+            --text-dim: #888;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(153, 41, 234, 0.2);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg);
+            background-image: 
+                linear-gradient(rgba(153, 41, 234, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(153, 41, 234, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+            color: var(--text-main);
+            font-family: 'Space Grotesk', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 40px 20px;
+        }
+
+        /* --- UI UTILITIES --- */
+        .glow-text { text-shadow: 0 0 10px var(--primary); }
+        .nexus-border { border: 1px solid var(--border); position: relative; margin-bottom: 25px; }
+        .nexus-border::before {
+            content: ''; position: absolute; top: -1px; left: -1px; width: 10px; height: 10px;
+            border-top: 2px solid var(--accent); border-left: 2px solid var(--accent);
+        }
+
+        .section-label {
+            color: var(--accent); font-size: 0.7rem; letter-spacing: 3px; 
+            text-transform: uppercase; margin-bottom: 20px; display: block;
+            border-left: 3px solid var(--primary); padding-left: 10px;
+        }
+
+        /* --- FORM VIEW --- */
+        .container { width: 100%; max-width: 1100px; z-index: 2; }
+        
+        .portal-header {
+            display: flex; justify-content: space-between; align-items: flex-end;
+            margin-bottom: 40px; border-bottom: 1px solid var(--border); padding-bottom: 20px;
+        }
+
+        .header-left h1 { font-size: 2.5rem; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 5px; }
+        .header-right { text-align: right; font-family: monospace; color: var(--accent); }
+
+        .form-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
+
+        .main-card { background: var(--panel); padding: 40px; border-radius: 4px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
+
+        .input-box { margin-bottom: 20px; position: relative; }
+        .input-box label { display: block; font-size: 0.65rem; text-transform: uppercase; color: var(--text-dim); margin-bottom: 8px; }
+
+        input, select, textarea {
+            width: 100%; background: rgba(0,0,0,0.3); border: 1px solid #333;
+            padding: 12px; color: white; font-family: inherit; font-size: 0.9rem;
+        }
+
+        input:focus { border-color: var(--primary); outline: none; background: rgba(153, 41, 234, 0.05); }
+
+        .quiz-option {
+            display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.02);
+            padding: 10px; margin-top: 5px; border: 1px solid #222; cursor: pointer;
+        }
+
+        .side-panel { display: flex; flex-direction: column; gap: 20px; }
+        .status-widget { background: var(--panel); padding: 20px; border: 1px solid #222; }
+
+        .register-btn {
+            background: none; border: 1px solid var(--accent); color: var(--accent);
+            padding: 20px; cursor: pointer; font-weight: bold; text-transform: uppercase;
+            letter-spacing: 3px; transition: 0.3s;
+        }
+
+        .register-btn:hover { background: var(--accent); color: black; box-shadow: 0 0 20px var(--accent); }
+
+        /* --- DASHBOARD VIEW --- */
+        #dashboard-view { display: none; width: 100%; }
+        .dash-layout { display: grid; grid-template-columns: 300px 1fr 300px; gap: 20px; }
+        .profile-sidebar { background: var(--panel); padding: 30px; text-align: center; }
+        .avatar-circle {
+            width: 100px; height: 100px; border-radius: 50%; border: 2px dashed var(--accent);
+            margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;
+            background: rgba(0,242,255,0.05); font-size: 2.5rem;
+        }
+        .stat-card { background: var(--glass); padding: 15px; border: 1px solid var(--border); text-align: center; }
+        .stat-card span { display: block; font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; }
+        .stat-card strong { display: block; font-size: 1.1rem; color: var(--accent); margin-top: 5px; }
+        .activity-log { background: #000; padding: 15px; font-family: monospace; font-size: 0.7rem; color: var(--success); }
+
+        @media (max-width: 1000px) { .form-grid, .dash-layout { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- START: FORM VIEW -->
+    <div id="form-view">
+        <div class="portal-header">
+            <div class="header-left">
+                <p style="color: var(--text-dim); font-size: 0.8rem;">CENTRAL NEURAL TERMINAL</p>
+                <h1 class="glow-text">Student Portal</h1>
+            </div>
+            <div class="header-right">
+                <p id="live-clock">TIMESTAMP: --:--:--</p>
+                <p>UPLINK: STABLE</p>
+            </div>
+        </div>
+
+        <form id="nexusForm" class="form-grid">
+            <div class="main-card nexus-border">
+                
+                <!-- SECTION 1: PERSONAL -->
+                <span class="section-label">01. Personal Identity</span>
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
+                    <div class="input-box">
+                        <label>Full Legal Alias</label>
+                        <input type="text" id="name" placeholder="John Doe" required>
+                    </div>
+                    <div class="input-box">
+                        <label>Bio Age</label>
+                        <input type="number" id="age" required>
+                    </div>
+                </div>
+                <div class="input-box">
+                    <label>Neural Contact (Email)</label>
+                    <input type="email" id="email" required>
+                </div>
+
+                <!-- SECTION 2: ACADEMIC -->
+                <span class="section-label">02. Academic Credentials</span>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="input-box">
+                        <label>Primary Discipline</label>
+                        <select id="dept" required>
+                            <option value="Computer Science">Computer Science</option>
+                            <option value="Cyber Security">Cyber Security</option>
+                            <option value="Artificial Intelligence">Artificial Intelligence</option>
+                        </select>
+                    </div>
+                    <div class="input-box">
+                        <label>Current Semester</label>
+                        <input type="text" id="semester" placeholder="Semester 4" required>
+                    </div>
+                </div>
+                <div class="input-box">
+                    <label>Student ID / Roll No</label>
+                    <input type="text" id="roll" placeholder="NX-7782" required>
+                </div>
+
+                <!-- SECTION 3: SKILL VALIDATION QUIZ -->
+                <span class="section-label">03. Skill Validation Quiz</span>
+                
+                <div class="input-box">
+                    <label>Q1: Which tag is used to link an external CSS file?</label>
+                    <select id="q1" required>
+                        <option value="">Select Answer</option>
+                        <option value="wrong">&lt;style&gt;</option>
+                        <option value="correct">&lt;link&gt;</option>
+                        <option value="wrong">&lt;script&gt;</option>
+                    </select>
+                </div>
+
+                <div class="input-box">
+                    <label>Q2: Which JS function prints to the browser console?</label>
+                    <select id="q2" required>
+                        <option value="">Select Answer</option>
+                        <option value="wrong">print()</option>
+                        <option value="correct">console.log()</option>
+                        <option value="wrong">system.out.println()</option>
+                    </select>
+                </div>
+
+                <div class="input-box">
+                    <label>Q3: What does CSS stand for?</label>
+                    <select id="q3" required>
+                        <option value="">Select Answer</option>
+                        <option value="wrong">Computer Style Sheets</option>
+                        <option value="correct">Cascading Style Sheets</option>
+                        <option value="wrong">Creative System Styling</option>
+                    </select>
+                </div>
+
+                <!-- SECTION 4: SECURITY -->
+                <span class="section-label">04. Security Protocols</span>
+                <div class="input-box">
+                    <label>Emergency Recovery Phrase</label>
+                    <input type="password" id="recovery" placeholder="Secret Key" required>
+                </div>
+
+            </div>
+
+            <div class="side-panel">
+                <div class="status-widget nexus-border">
+                    <label style="font-size: 0.6rem; color: var(--accent);">REGISTRATION_PROGRESS</label>
+                    <div style="height: 4px; background: #222; margin: 10px 0;">
+                        <div id="prog-bar" style="width: 0%; height: 100%; background: var(--primary);"></div>
+                    </div>
+                    <p id="prog-text" style="font-size: 0.7rem;">WAITING FOR INPUT...</p>
+                </div>
+
+                <div class="status-widget nexus-border">
+                    <p style="font-size: 0.7rem; color: var(--text-dim);">By clicking Register, you authorize Nexus OS to index your neural data for academic tracking.</p>
+                </div>
+
+                <button type="submit" class="register-btn" id="syncBtn">Register</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- START: DASHBOARD VIEW -->
+    <div id="dashboard-view">
+        <div class="portal-header">
+            <div class="header-left">
+                <h1 class="glow-text">Dashboard</h1>
+                <p style="color: var(--accent); letter-spacing: 2px;">WELCOME BACK, <span id="welcome-name">USER</span></p>
+            </div>
+            <button onclick="location.reload()" style="background:none; border:1px solid #333; color:#555; padding: 5px 15px; cursor:pointer;">LOGOUT</button>
+        </div>
+
+        <div class="dash-layout">
+            <!-- Sidebar -->
+            <div class="profile-sidebar nexus-border">
+                <div class="avatar-circle"><i class="fa-solid fa-user-graduate"></i></div>
+                <h2 id="d-name" style="color: var(--accent);">STUDENT NAME</h2>
+                <p id="d-roll" style="font-size: 0.7rem; color: var(--text-dim); margin-bottom: 20px;">ID: --</p>
+                <div style="text-align: left; font-size: 0.8rem; border-top: 1px solid #222; padding-top: 15px;">
+                    <p><strong>RANK:</strong> <span style="color:var(--success)">VERIFIED</span></p>
+                    <p><strong>UPLINK:</strong> SECURE</p>
+                    <p><strong>GPA:</strong> 3.9/4.0 (EST)</p>
+                </div>
+            </div>
+
+            <!-- Middle -->
+            <div class="central-hub">
+                <div class="data-strip">
+                    <div class="stat-card">
+                        <span>Major</span>
+                        <strong id="d-dept">-</strong>
+                    </div>
+                    <div class="stat-card">
+                        <span>Semester</span>
+                        <strong id="d-sem">-</strong>
+                    </div>
+                    <div class="stat-card">
+                        <span>Quiz Score</span>
+                        <strong id="d-score" style="color: var(--success);">0/3</strong>
+                    </div>
+                </div>
+
+                <div class="main-card nexus-border" style="padding: 20px;">
+                    <h4 class="section-label" style="margin-bottom: 10px;">Recent Academic Activity</h4>
+                    <div style="padding: 10px; border-bottom: 1px solid #222;">
+                        <p style="font-size: 0.9rem;">Course: Web Architecture 101</p>
+                        <small style="color: var(--text-dim);">Last accessed 2 hours ago</small>
+                    </div>
+                    <div style="padding: 10px;">
+                        <p style="font-size: 0.9rem;">Assignment: Neural CSS Flexbox</p>
+                        <small style="color: var(--success);">Status: Submitted</small>
+                    </div>
+                </div>
+
+                <div class="activity-log">
+                    <div class="log-entry">> [SUCCESS] Student Profile Created</div>
+                    <div class="log-entry">> [INFO] Academic credits synchronized</div>
+                    <div class="log-entry">> [SECURITY] Recovery key hashed and stored</div>
+                </div>
+            </div>
+
+            <!-- Right -->
+            <div class="side-panel">
+                <div class="stat-card nexus-border">
+                    <span>Account Health</span>
+                    <strong style="color: var(--success);">EXCELLENT</strong>
+                </div>
+                <div class="stat-card nexus-border" style="background: rgba(153, 41, 234, 0.1);">
+                    <span>Course Progress</span>
+                    <div style="height: 10px; background: #000; margin-top: 10px;">
+                        <div style="width: 75%; height: 100%; background: var(--primary);"></div>
+                    </div>
+                    <p style="font-size: 0.6rem; margin-top: 5px;">75% SYLLABUS COMPLETE</p>
+                </div>
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=NEXUS_VERIFIED" style="filter: invert(1); opacity: 0.3; margin: 0 auto; width: 100px;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Clock
+    setInterval(() => {
+        const now = new Date();
+        document.getElementById('live-clock').innerText = `TIMESTAMP: ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+    }, 1000);
+
+    const form = document.getElementById('nexusForm');
+    const inputs = form.querySelectorAll('input, select');
+    
+    // Progress Logic
+    inputs.forEach(input => {
+        input.addEventListener('input', () => {
+            let filled = 0;
+            inputs.forEach(i => { if(i.value.length > 0) filled++; });
+            let percent = Math.floor((filled / inputs.length) * 100);
+            document.getElementById('prog-bar').style.width = percent + '%';
+            document.getElementById('prog-text').innerText = percent === 100 ? 'READY FOR UPLOAD' : `INCOMPLETE: ${percent}%`;
+        });
+    });
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('syncBtn');
+        btn.innerText = "SYNCHRONIZING...";
+        
+        // Calculate Quiz Score
+        let score = 0;
+        if(document.getElementById('q1').value === 'correct') score++;
+        if(document.getElementById('q2').value === 'correct') score++;
+        if(document.getElementById('q3').value === 'correct') score++;
+
+        setTimeout(() => {
+            // Transfer Data to Dashboard
+            document.getElementById('welcome-name').innerText = document.getElementById('name').value.toUpperCase();
+            document.getElementById('d-name').innerText = document.getElementById('name').value;
+            document.getElementById('d-roll').innerText = "ID: " + document.getElementById('roll').value;
+            document.getElementById('d-dept').innerText = document.getElementById('dept').value;
+            document.getElementById('d-sem').innerText = document.getElementById('semester').value;
+            document.getElementById('d-score').innerText = `${score} / 3`;
+
+            // Transition
+            document.getElementById('form-view').style.display = 'none';
+            document.getElementById('dashboard-view').style.display = 'block';
+            window.scrollTo(0,0);
+        }, 1500);
+    });
+</script>
+
+</body>
+</html>
